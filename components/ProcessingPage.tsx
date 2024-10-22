@@ -1,51 +1,58 @@
 'use client';
 
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Check, X } from "lucide-react"
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Check, X } from "lucide-react";
 
-export default function Component() {
-  const [progress, setProgress] = useState(0)
-  const [currentStep, setCurrentStep] = useState(1)
-  const [timeRemaining, setTimeRemaining] = useState(180) // 3 minutes in seconds
-  const [notifyWhenComplete, setNotifyWhenComplete] = useState(false)
+export default function ProcessingPageComponent() {
+  const router = useRouter();
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes in seconds
+  const [notifyWhenComplete, setNotifyWhenComplete] = useState(false);
+
+  // Placeholder for transcriptionId
+  const transcriptionId = "your_transcription_id_logic_here"; // Replace with actual logic
 
   const steps = [
     "Uploading video",
     "Extracting audio",
     "Generating transcript",
     "Finalizing"
-  ]
+  ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress((prevProgress) => {
         if (prevProgress >= 100) {
-          clearInterval(interval)
-          return 100
+          clearInterval(interval);
+          // Navigate to the transcript view page
+          router.push(`/transcript/${transcriptionId}`); // Ensure transcriptionId is available
+          return 100;
         }
-        return prevProgress + 1
-      })
+        return prevProgress + 1;
+      });
 
-      setTimeRemaining((prevTime) => Math.max(0, prevTime - 1))
-    }, 1000)
+      setTimeRemaining((prevTime) => Math.max(0, prevTime - 1));
+    }, 1000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, [transcriptionId]); // Add transcriptionId to the dependency array
 
   useEffect(() => {
-    if (progress < 25) setCurrentStep(1)
-    else if (progress < 50) setCurrentStep(2)
-    else if (progress < 75) setCurrentStep(3)
-    else setCurrentStep(4)
-  }, [progress])
+    if (progress < 25) setCurrentStep(1);
+    else if (progress < 50) setCurrentStep(2);
+    else if (progress < 75) setCurrentStep(3);
+    else setCurrentStep(4);
+  }, [progress]);
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center relative overflow-hidden">
@@ -149,5 +156,5 @@ export default function Component() {
         </div>
       </div>
     </div>
-  )
+  );
 }

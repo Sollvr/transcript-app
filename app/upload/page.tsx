@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import dynamic from 'next/dynamic';
 
-
+import { useRouter } from 'next/navigation';
 
 
 
@@ -24,7 +24,7 @@ const Progress = dynamic(() => import('@/components/ui/progress').then(mod => mo
 
 
 
-import { Upload, Play } from 'lucide-react'
+import { Upload, Play } from 'lucide-react';
 
 import { convertToAudio } from '@/lib/services/ffmpeg';
 
@@ -32,21 +32,27 @@ import { transcribeAudio } from '@/lib/services/openai';
 
 
 
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB in bytes
+
+
+
 export default function UploadPage() {
 
-  const [activeTab, setActiveTab] = useState('upload')
+  const router = useRouter();
+
+  const [activeTab, setActiveTab] = useState('upload');
 
   const [file, setFile] = useState<File | null>(null);
 
-  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const [estimatedTime, setEstimatedTime] = useState(0)
+  const [estimatedTime, setEstimatedTime] = useState(0);
 
-  const [isUploading, setIsUploading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false);
 
-  const [isConverting, setIsConverting] = useState(false)
+  const [isConverting, setIsConverting] = useState(false);
 
-  const [isTranscribing, setIsTranscribing] = useState(false)
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
 
@@ -54,13 +60,55 @@ export default function UploadPage() {
 
 
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
     if (e.target.files) {
 
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
 
-      handleFileUpload();
+      
+
+      if (!selectedFile.type.startsWith('video/')) {
+
+        alert('Please select a video file (MP4 or MOV)');
+
+        return;
+
+      }
+
+
+
+      if (selectedFile.size > MAX_FILE_SIZE) {
+
+        alert('File is too large. Please select a file under 500MB');
+
+        return;
+
+      }
+
+
+
+      console.log('File selected:', {
+
+        name: selectedFile.name,
+
+        type: selectedFile.type,
+
+        size: `${(selectedFile.size / (1024 * 1024)).toFixed(2)}MB`
+
+      });
+
+
+
+      setFile(selectedFile);
+
+      setUploadProgress(0);
+
+      setEstimatedTime(0);
+
+      setTranscriptionResult(null);
+
+      setAudioBlob(null);
 
     }
 
@@ -68,99 +116,76 @@ export default function UploadPage() {
 
 
 
-  const handleFileUpload = () => {
-
-    setIsUploading(true)
-
-    const interval = setInterval(() => {
-
-      setUploadProgress((prevProgress) => {
-
-        if (prevProgress >= 100) {
-
-          clearInterval(interval)
-
-          setIsUploading(false)
-
-          return 100
-
-        }
-
-        return prevProgress + 10
-
-      })
-
-      setEstimatedTime((prevTime) => Math.max(0, prevTime - 1))
-
-    }, 500)
-
-    setEstimatedTime(10) // Starting with 10 seconds estimation
-
-  }
-
-
-
   const handleSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault();
 
-    if (!file) return;
+    
+
+    if (!file) {
+
+      console.error('No file selected.');
+
+      return;
+
+    }
 
 
-
-    setIsConverting(true);
 
     try {
 
-      const audioBlob = await convertToAudio(file);
+      setIsConverting(true);
 
-      setAudioBlob(audioBlob);
+      console.log('Starting conversion process...');
 
-    } catch (error) {
+      
 
-      console.error('Audio conversion failed:', error);
+      const convertedAudio = await convertToAudio(file);
+
+      console.log('Conversion successful, audio size:', convertedAudio.size);
+
+      
+
+      setAudioBlob(convertedAudio);
 
       setIsConverting(false);
 
-      return;
+      setIsTranscribing(true);
 
-    }
-
-    setIsConverting(false);
-
-
-
-    if (!audioBlob) {
-
-      console.error('Audio conversion failed');
-
-      return;
-
-    }
-
-
-
-    setIsTranscribing(true);
-
-    try {
-
-      const audioFile = new File([audioBlob], 'audio.mp3', { type: 'audio/mpeg' });
+      const audioFile = new File([convertedAudio], 'audio.mp3', { type: 'audio/mp3' });
 
       const transcription = await transcribeAudio(audioFile);
 
-      console.log('Transcription:', transcription);
+      console.log('Transcription result:', transcription);
 
       setTranscriptionResult(transcription.text);
 
+      // Ensure transcriptionId is available
+      if (transcription.id) {
+        // Simulate processing completion
+        setUploadProgress(100);
+        setTimeout(() => {
+          router.push(`/transcript/${transcription.id}`); // Navigate to the transcript view page
+        }, 1000); // Adjust the delay as needed
+      } else {
+        console.error('Transcription ID is undefined.');
+      }
+      
     } catch (error) {
 
-      console.error('Transcription failed:', error);
+      console.error('Process failed:', error);
 
-      setTranscriptionResult('Transcription failed. Please try again.');
+      setTranscriptionResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+    } finally {
+
+      setIsUploading(false);
+
+      setIsConverting(false);
+
+      setIsTranscribing(false);
 
     }
-
-    setIsTranscribing(false);
 
   };
 

@@ -1,5 +1,6 @@
-import ProcessingPageComponent from '@/components/ProcessingPage'
-
-export default function ProcessingPage() {
-  return <ProcessingPageComponent />
-}
+import ProcessingPageComponent from '@/components/ProcessingPage'
+
+export default function ProcessingPage() {
+  return <ProcessingPageComponent />
+}
+
