@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -6,6 +7,16 @@ import { Card, CardContent } from "@/components/ui/card"
 import { FileText, Zap, Search, Download, Video, CheckCircle } from "lucide-react"
 
 export default function LandingPage() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-14 flex items-center">
@@ -14,8 +25,12 @@ export default function LandingPage() {
           <span className="font-bold text-lg">TranscriptPro</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Button variant="outline">Log In</Button>
-          <Button>Sign Up</Button>
+          <Link href="/login" passHref>
+            <Button variant="outline">Log In</Button>
+          </Link>
+          <Link href="/signup" passHref>
+            <Button>Sign Up</Button>
+          </Link>
         </nav>
       </header>
       <main className="flex-1">

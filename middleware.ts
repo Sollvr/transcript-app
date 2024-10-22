@@ -1,17 +1,16 @@
 import { withAuth } from "next-auth/middleware"
+import { NextRequest, NextResponse } from 'next/server';
 
 export default withAuth(
-  function middleware(req) {
-    // Add any custom logic here
+  function middleware(req: any) {
+    // You can add custom logic here if needed
   },
   {
     callbacks: {
-      authorized: ({ req, token }) => {
-        // Add your authorization logic here
-        return !!token
-      },
+      authorized: ({ token }: { token: any }) => !!token,
     },
   }
 )
 
+// Protect these routes
 export const config = { matcher: ["/dashboard", "/upload", "/processing", "/transcript/:path*", "/export/:path*", "/search"] }

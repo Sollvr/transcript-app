@@ -209,11 +209,11 @@ export default function Dashboard() {
 
               <h1 className="text-3xl font-bold">Welcome back, {user.name}</h1>
 
-              <Button size="lg">
-
-                <Plus className="mr-2 h-4 w-4" /> New Transcript
-
-              </Button>
+              <Link href="/upload" passHref>
+                <Button size="lg">
+                  <Plus className="mr-2 h-4 w-4" /> New Transcript
+                </Button>
+              </Link>
 
             </div>
 
